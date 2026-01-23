@@ -36,6 +36,7 @@ jobs:
           TAG_NAME="${{ inputs.tag }}"
 
           echo "Force aligning tag $TAG_NAME to current HEAD..."
+
           git tag -f "$TAG_NAME"
 
       - name: Set up Go 1.x
@@ -50,6 +51,8 @@ jobs:
       - name: Add Lowercase Repository Name to Environment
         run: |
           echo REPOSITORY_NAME_LOWERCASE=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+
+          git status
 
       - uses: "docker/login-action@v3"
         if: matrix.os == 'ubuntu-22.04'
