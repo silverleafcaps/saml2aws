@@ -37,8 +37,7 @@ jobs:
 
           # Check if tag exists in the fetched history
           if git rev-parse "refs/tags/$TAG_NAME" >/dev/null 2>&1; then
-            echo "Tag $TAG_NAME exists. Checking out specific commit..."
-            git checkout "refs/tags/$TAG_NAME"
+            echo "Tag $TAG_NAME exists"
           else
             echo "Tag $TAG_NAME does not exist. creating it on current HEAD..."
             git tag "$TAG_NAME"

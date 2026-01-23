@@ -126,7 +126,7 @@ func (cl *Client) Authenticate(loginDetails *creds.LoginDetails) (string, error)
     if loginDetails.CookiesJson == "" {
         logger.Info("could not retrieve cookies")
     } else {
-		logger.Info("Cookie payload bytes: ", len(loginDetails.CookiesJson))
+		logger.Info("cookie json string length: ", len(loginDetails.CookiesJson))
 	}
 
 	var cookies []playwright.OptionalCookie
