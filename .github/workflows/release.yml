@@ -35,13 +35,8 @@ jobs:
 
           TAG_NAME="${{ inputs.tag }}"
 
-          # Check if tag exists in the fetched history
-          if git rev-parse "refs/tags/$TAG_NAME" >/dev/null 2>&1; then
-            echo "Tag $TAG_NAME exists"
-          else
-            echo "Tag $TAG_NAME does not exist. creating it on current HEAD..."
-            git tag "$TAG_NAME"
-          fi
+          echo "Force aligning tag $TAG_NAME to current HEAD..."
+          git tag -f "$TAG_NAME"
 
       - name: Set up Go 1.x
         uses: actions/setup-go@v5
