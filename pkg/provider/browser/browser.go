@@ -147,8 +147,8 @@ func (cl *Client) Authenticate(loginDetails *creds.LoginDetails) (string, error)
 	}
 
 	defer func() {
-		logger.Info("saving storage state")
 		if cl.DisableCookies {
+			logger.Info("saving storage state")
 			cookies, err := context.Cookies(loginDetails.URL)
 
 			if err != nil {
