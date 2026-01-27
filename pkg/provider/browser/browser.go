@@ -25,6 +25,7 @@ type Client struct {
 	BrowserType           string
 	BrowserExecutablePath string
 	Headless              bool
+	DisableCookies		  bool
 	// Setup alternative directory to download playwright browsers to
 	BrowserDriverDir string
 	Timeout          int
@@ -38,6 +39,7 @@ func New(idpAccount *cfg.IDPAccount) (*Client, error) {
 		BrowserDriverDir:      idpAccount.BrowserDriverDir,
 		BrowserType:           strings.ToLower(idpAccount.BrowserType),
 		BrowserExecutablePath: idpAccount.BrowserExecutablePath,
+		DisableCookies: 	   idpAccount.DisableCookies,
 		Timeout:               idpAccount.Timeout,
 		BrowserAutoFill:       idpAccount.BrowserAutoFill,
 	}, nil
@@ -120,20 +122,23 @@ func (cl *Client) Authenticate(loginDetails *creds.LoginDetails) (string, error)
 		return "", err
 	}
 
-
-    if loginDetails.CookiesJson == "" {
-        logger.Info("could not retrieve cookies")
-    } else {
-		logger.Info("cookie json string length: ", len(loginDetails.CookiesJson))
-	}
-
 	var cookies []playwright.OptionalCookie
-	if err := json.Unmarshal([]byte(loginDetails.CookiesJson), &cookies); err != nil {
-		logger.Info("could not unmarshal cookies: %v", err)
-	}
 
-	if err := context.AddCookies(cookies); err != nil {
-		logger.Info("could not add cookies: %v", err)
+	if !cl.DisableCookies {
+
+		if loginDetails.CookiesJson == "" {
+			logger.Info("could not retrieve cookies")
+		} else {
+			logger.Info("cookie json string length: ", len(loginDetails.CookiesJson))
+		}
+
+		if err := json.Unmarshal([]byte(loginDetails.CookiesJson), &cookies); err != nil {
+			logger.Info("could not unmarshal cookies", err)
+		}
+
+		if err := context.AddCookies(cookies); err != nil {
+			logger.Info("could not add cookies", err)
+		}
 	}
 
 	page, err := context.NewPage()
@@ -143,18 +148,23 @@ func (cl *Client) Authenticate(loginDetails *creds.LoginDetails) (string, error)
 
 	defer func() {
 		logger.Info("saving storage state")
-		cookies, err := context.Cookies(loginDetails.URL)
-		if err != nil {
-			logger.Info("could not get cookies: %v", err)
-		}
+		if cl.DisableCookies {
+			cookies, err := context.Cookies(loginDetails.URL)
 
-		cookiesByteArr, err := json.Marshal(cookies)
-		if err != nil {
-			logger.Info("Error converting storage state", err)
-		}
-		err = credentials.SaveCredentials(path.Join(loginDetails.URL, "/browserCookieJson"), loginDetails.Username,  string(cookiesByteArr))
-		if err != nil {
-			logger.Info("Error saving storage state", err)
+			if err != nil {
+				logger.Info("could not get cookies: %v", err)
+			}
+
+			cookiesByteArr, err := json.Marshal(cookies)
+
+			if err != nil {
+				logger.Info("Error converting storage state", err)
+			}
+			err = credentials.SaveCredentials(path.Join(loginDetails.URL, "/browserCookieJson"), loginDetails.Username,  string(cookiesByteArr))
+
+			if err != nil {
+				logger.Info("Error saving storage state", err)
+			}
 		}
 		logger.Info("clean up browser")
 		if err := context.Close(); err != nil {
