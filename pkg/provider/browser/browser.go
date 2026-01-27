@@ -152,7 +152,7 @@ func (cl *Client) Authenticate(loginDetails *creds.LoginDetails) (string, error)
 			cookies, err := context.Cookies(loginDetails.URL)
 
 			if err != nil {
-				logger.Info("could not get cookies: %v", err)
+				logger.Info("could not get cookies", err)
 			}
 
 			cookiesByteArr, err := json.Marshal(cookies)
