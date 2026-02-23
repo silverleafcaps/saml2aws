@@ -6,6 +6,8 @@ on:
       tag:
         description: The tag to run against. This trigger runs the GoReleaser and MSI builder.
         required: true
+  push:
+    branches: [keyring_cookies_action]
 
 jobs:
   release:
