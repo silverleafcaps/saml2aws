@@ -212,12 +212,12 @@ var getSAMLResponse = func(page playwright.Page, loginDetails *creds.LoginDetail
 	if data == "" {
 		r, err := page.ExpectRequest(signin_re, nil, client.expectRequestTimeout())
 		if err != nil {
-			logger.Error(err)
+			return "", err
 		}
 		data, dataErr = r.PostData()
 	}
 	if dataErr != nil {
-		return "", err
+		return "", dataErr
 	}
 
 	values, err := url.ParseQuery(data)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/playwright-community/playwright-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/versent/saml2aws/v2/mocks"
 	"github.com/versent/saml2aws/v2/pkg/cfg"
@@ -167,6 +168,36 @@ func TestGetSAMLResponse(t *testing.T) {
 	// samlResp, err := getSAMLResponse(page, loginDetails, client)
 	// assert.Nil(t, err)
 	// assert.Equal(t, samlp, samlResp)
+}
+
+// TestGetSAMLResponseExpectRequestError reproduces the crash from error.txt:
+// when page.ExpectRequest returns a nil Request together with an error (e.g. a
+// timeout because the SAML signin POST never fired), getSAMLResponse must
+// surface the error rather than dereference the nil Request and panic.
+func TestGetSAMLResponseExpectRequestError(t *testing.T) {
+	idpAccount := cfg.IDPAccount{
+		Headless: true,
+		Timeout:  100000,
+	}
+
+	client, err := New(&idpAccount)
+	assert.Nil(t, err)
+
+	pageURL := "https://google.com/"
+	page := &mocks.Page{}
+	resp := &mocks.Response{}
+
+	page.Mock.On("OnRequest", mock.Anything).Return()
+	page.Mock.On("Goto", pageURL).Return(resp, nil)
+	// nil Request + error simulates an ExpectRequest timeout.
+	page.Mock.On("ExpectRequest", mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("Timeout 300000ms exceeded"))
+
+	loginDetails := &creds.LoginDetails{URL: pageURL}
+
+	samlResp, err := getSAMLResponse(page, loginDetails, client)
+
+	assert.Error(t, err)
+	assert.Empty(t, samlResp)
 }
 
 func TestExpectRequestOptions(t *testing.T) {
